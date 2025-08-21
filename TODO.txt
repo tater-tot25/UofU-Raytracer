@@ -1,3 +1,5 @@
 Make sure ray directions are normalized after each transform.
 
 hInfo.z might be local??? I should compute world-space distances.
+
+I need to refactor some of the code and move the main logic loops to a new "workload" file to keep it nice and organized
