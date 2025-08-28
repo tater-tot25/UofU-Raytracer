@@ -1,1 +1,4 @@
-g++ main.cpp viewport.cpp xmlload.cpp lodepng.cpp tinyxml2.cpp objects.cpp -o raytracer.exe -LC:/msys64/mingw64/lib -lfreeglut -lopengl32 -lglu32 -I C:/msys64/mingw64/include
+mingw32-make
+mingw32-make clean (rebuild everything)
+./raytracer 
+

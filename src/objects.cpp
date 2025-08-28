@@ -1,8 +1,6 @@
 #include "objects.h"
 #include "cyVector.h"
 
-Sphere theSphere;
-
 bool Sphere::IntersectRay(Ray const &ray, HitInfo &hInfo, int hitSide) const
 {
     // Our terms for the quadratic equation
@@ -42,7 +40,7 @@ bool Sphere::IntersectRay(Ray const &ray, HitInfo &hInfo, int hitSide) const
         return false;
     }
     hInfo.z = t;
-    hInfo.node = nullptr; 
+    hInfo.node = hInfo.node; 
     hInfo.front = true;
     return true;
 }
