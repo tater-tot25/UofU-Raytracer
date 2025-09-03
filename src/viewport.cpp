@@ -26,6 +26,11 @@
 #include <time.h>
 
 #include <GL/freeglut.h>
+#include <atomic>
+#include <thread>
+
+static std::thread gRenderThread;
+static std::atomic<bool> gCancel{false};
 
 //-------------------------------------------------------------------------------
 // How to use:

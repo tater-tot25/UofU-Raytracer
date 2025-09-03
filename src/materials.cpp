@@ -28,7 +28,10 @@ Color MtlPhong::Shade(const Ray &ray, const HitInfo &hInfo, const LightList &lig
             Color SpecularComponent = this->specular * I * pow(NdotR, this->glossiness);
             finalColor += SpecularComponent;
         }
-    }   
+    }  
+    finalColor.r = std::min(finalColor.r, 1.0f);
+    finalColor.g = std::min(finalColor.g, 1.0f);
+    finalColor.b = std::min(finalColor.b, 1.0f); 
     return finalColor;
 }
 
@@ -56,12 +59,13 @@ Color MtlBlinn::Shade(const Ray &ray, const HitInfo &hInfo, const LightList &lig
             finalColor += SpecularComponent;
         }
     }   
+    finalColor.r = std::min(finalColor.r, 1.0f);
+    finalColor.g = std::min(finalColor.g, 1.0f);
+    finalColor.b = std::min(finalColor.b, 1.0f);
     return finalColor;
 }
 
-//Entirely Optional, Only do if I feel confident and have time
 Color MtlMicrofacet::Shade(const Ray &ray, const HitInfo &hInfo, const LightList &lights) const {
-    // TODO: implement Microfacet shading (GGX, Cook-Torrance, etc.)
-    // Simple placeholder: return baseColor
+    //pass
     return baseColor;
 }

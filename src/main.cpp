@@ -10,6 +10,13 @@
 #include <thread>
 #include <vector>
 #include <materials.h>
+#include <atomic>
+#include <random>
+#include <numeric>
+#include <algorithm>
+
+static std::thread gRenderThread;
+static std::atomic<bool> gCancel{false};
 
 // Declaring LoadScene since there is no header
 int LoadScene(RenderScene &scene, const char *filename);
@@ -29,32 +36,28 @@ void IntersectNodeRecursive(Node* node, const Ray& ray, HitInfo& closestHit, boo
     Vec3f   worldPos = parentTm * node->GetPosition() + parentPos;
     Object* obj = node->GetNodeObj();   //Extra check I have to make sure I'm not looking at a scene or camera or something, and to filter to spheres
     if (obj) {
-        Sphere* sphere = dynamic_cast<Sphere*>(obj);
-        if (sphere) {
-            //Begin Transform ray to local space
-            HitInfo tempHInfo;
-            Ray localRay;
-            Matrix3f itm = worldTm.GetInverse();  //inverse transform matrix
-            localRay.p = itm * (ray.p - worldPos);
-            localRay.dir = itm * ray.dir;
-            localRay.dir.Normalize(); 
-            //End Transform ray to local space
-            if (sphere->IntersectRay(localRay, tempHInfo)) {
-                Vec3f localHit = localRay.p + tempHInfo.z * localRay.dir;
-                Vec3f worldHit = worldTm * localHit + worldPos;
-                float t_world = (worldHit - ray.p).Length();
-                Vec3f localNormal = localHit - Vec3f(0,0,0);  // vector from center to hit
-                localNormal.Normalize();                      
-                if (t_world < closestZ) {
-                    closestZ = t_world;
-                    closestHit = tempHInfo;
-                    closestHit.p = worldHit;
-                    closestHit.node = node;
-                    closestHit.z = t_world;
-                    hit = true;
-                    Matrix3f invTm = worldTm.GetInverse();
-                    closestHit.N = invTm.TransposeMult(localNormal).GetNormalized();
-                }
+        HitInfo tempHInfo;
+        Ray localRay;
+        Matrix3f itm = worldTm.GetInverse();  //inverse transform matrix
+        localRay.p = itm * (ray.p - worldPos);
+        localRay.dir = itm * ray.dir;
+        localRay.dir.Normalize(); 
+        //End Transform ray to local space
+        if (obj->IntersectRay(localRay, tempHInfo)) {
+            Vec3f localHit = localRay.p + tempHInfo.z * localRay.dir;
+            Vec3f worldHit = worldTm * localHit + worldPos;
+            float t_world = (worldHit - ray.p).Length();
+            Vec3f localNormal = localHit - Vec3f(0,0,0);  // vector from center to hit
+            localNormal.Normalize();                      
+            if (t_world < closestZ) {
+                closestZ = t_world;
+                closestHit = tempHInfo;
+                closestHit.p = worldHit;
+                closestHit.node = node;
+                closestHit.z = t_world;
+                hit = true;
+                Matrix3f invTm = worldTm.GetInverse();
+                closestHit.N = invTm.TransposeMult(localNormal).GetNormalized();
             }
         }
     }
@@ -111,6 +114,9 @@ void helperRayCastPixel(RenderScene& scene, int x, int y,
     IntersectNodeRecursive(&scene.rootNode, ray, hInfo, hit, closestZ, identity, zero);
     int pixelIndex = y * scene.camera.imgWidth + x;
     colorPixel(hit, pixelIndex, scene, hInfo, ray);
+    float *zb = scene.renderImage.GetZBuffer();
+    if (zb) zb[pixelIndex] = hit ? closestZ : BIGFLOAT;
+    scene.renderImage.IncrementNumRenderPixel(1);
 }
 
 
@@ -122,10 +128,10 @@ void renderChunk(RenderScene& scene, int yStart, int yEnd,
                  const cy::Vec3f& camDir)
 {
     float aspect = float(scene.camera.imgWidth) / float(scene.camera.imgHeight);       // W,H are ints
-    float h = 2.0f * tan(scene.camera.fov * 0.5f * M_PI / 180.0f); // h in world units
+    float h = 2.0f * tan(scene.camera.fov * 0.5f * M_PI / 180.0f); // h in world units (also converts degrees to radians)
     float w = h * aspect;                      // width in world units
-    for (int y = yStart; y < yEnd; y++) {
-        for (int x = 0; x < scene.camera.imgWidth; x++) {
+    for (int y = yStart; y < yEnd && !gCancel; y++) {
+        for (int x = 0; x < scene.camera.imgWidth && !gCancel; x++) {
             helperRayCastPixel(scene, x, y, camPos, camRight, camTrueUp, camDir, h, w);
         }
     }
@@ -140,26 +146,60 @@ void helperRayCastLoopThreaded(RenderScene& scene)
     cy::Vec3f camRight = scene.camera.dir.Cross(scene.camera.up).GetNormalized(); // horizontal
     int numThreads = std::thread::hardware_concurrency();
     if (numThreads == 0) numThreads = 4; // I would hope that whoever runs this has at least 4 threads
-    int rowsPerThread = scene.camera.imgHeight / numThreads;
+    int width = scene.camera.imgWidth;
+    int height = scene.camera.imgHeight;
+    int totalPixels = width * height;
+    float aspect = float(width) / float(height);
+    float h = 2.0f * tan(scene.camera.fov * 0.5f * M_PI / 180.0f);
+    float w = h * aspect;
+    Color24 *pixels = scene.renderImage.GetPixels();
+    float *zb = scene.renderImage.GetZBuffer();
+    if (zb) { // declare an array of the image size of max pixels
+        for (int i = 0; i < totalPixels; ++i) zb[i] = BIGFLOAT;
+    }
+    scene.renderImage.ResetNumRenderedPixels();
+    std::vector<int> pixelIndices(totalPixels);
+    std::iota(pixelIndices.begin(), pixelIndices.end(), 0);
+    std::mt19937 rng((unsigned)std::random_device{}());
+    std::shuffle(pixelIndices.begin(), pixelIndices.end(), rng);
+    std::atomic<int> nextIndex(0);
     std::vector<std::thread> threads;
-    //thread chunk calculation, doing it in chunks of horizontal rectangles accross the screen. I'm hoping this will be better for 
-    //locality and general cache efficiency
-    for (int i = 0; i < numThreads; ++i) {
-        int yStart = i * rowsPerThread;
-        int yEnd = (i == numThreads - 1) ? scene.camera.imgHeight : yStart + rowsPerThread;
-        threads.emplace_back(renderChunk, std::ref(scene), yStart, yEnd,
-                             scene.camera.pos, camRight, scene.camera.up, scene.camera.dir);
+    threads.reserve(numThreads);
+    cy::Vec3f camPos = scene.camera.pos;
+    cy::Vec3f camTrueUp = scene.camera.up;
+    cy::Vec3f camDir = scene.camera.dir;
+    for (int t = 0; t < numThreads; ++t) {
+        threads.emplace_back([&scene, &pixelIndices, &nextIndex, totalPixels, width, camPos, camRight, camTrueUp, camDir, h, w]() {
+            while (!gCancel) {
+                int i = nextIndex.fetch_add(1);
+                if (i >= totalPixels) break;
+                int pixelIndex = pixelIndices[i];
+                int x = pixelIndex % width;
+                int y = pixelIndex / width;
+                helperRayCastPixel(scene, x, y, camPos, camRight, camTrueUp, camDir, h, w);
+            }
+        });
     }
     for (auto &t : threads) t.join();
     scene.renderImage.SaveImage("output.png");
 }
 
 //Begin: Stuff for the opengl viewport thingy
-void BeginRender(RenderScene *scene) {
-    helperRayCastLoopThreaded(*scene);
+static void RenderWorker(RenderScene* scene) {
+    gCancel = false;
+    helperRayCastLoopThreaded(*scene);   // your existing renderer; see §2 for progress updates
 }
+
+void BeginRender(RenderScene *scene) {
+    if (gRenderThread.joinable()) return; // already rendering
+    gRenderThread = std::thread(RenderWorker, scene);
+}
+
 void StopRender() {
-    //pass
+    if (gRenderThread.joinable()) {
+        gCancel = true;                  // use this in your loops to early-exit (see §2)
+        gRenderThread.join();
+    }
 }
 void ShowViewport(RenderScene *scene);
 //End: Stuff for the opengl viewport thingy

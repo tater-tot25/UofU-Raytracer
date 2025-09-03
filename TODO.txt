@@ -1,5 +1,1 @@
-I need to refactor some of the code and move the main logic loops to a new "workload" file to keep it nice and organized
-
-Switch my threading to per pixel instead of chunk
-
-bucket rendering <------
+maybe the physics based lighting, but I'm not to thrilled about it
