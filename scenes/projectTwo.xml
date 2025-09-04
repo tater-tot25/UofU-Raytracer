@@ -2,8 +2,8 @@
   <scene>
     <!-- Objects -->
     <object type="sphere" name="sphere1" material="mtl1">
-      <scale x="25" y="25" z="0.5"/>
-      <translate x="0" y="11" z="0"/>
+      <scale x="25" y="25" z="3"/>
+      <translate x="0" y="50" z="0"/>
     </object>
     <object type="sphere" name="sphere2" material="mtl2">
       <scale value="8.0"/>

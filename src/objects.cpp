@@ -3,43 +3,42 @@
 
 bool Sphere::IntersectRay(Ray const &ray, HitInfo &hInfo, int hitSide) const
 {
-    // Our terms for the quadratic equation
-    Vec3f L = ray.p;             
-    float a = ray.dir.Dot(ray.dir);          
-    float b = 2.0f * ray.dir.Dot(L);
-    float c = L.Dot(L) - 1.0f;   
+    // Convert ray origin and direction to double precision
+    Vec3d L(ray.p.x, ray.p.y, ray.p.z);
+    Vec3d D(ray.dir.x, ray.dir.y, ray.dir.z);
 
-    //compute the discriminate
-    float discriminant = b*b - 4*a*c;
-    if (discriminant < 0) return false;
+    // Quadratic coefficients in double
+    double a = D.Dot(D);
+    double b = 2.0 * D.Dot(L);
+    double c = L.Dot(L) - 1.0;
 
-    float sqrtDisc = sqrt(discriminant);
-    float t0 = (-b - sqrtDisc) / (2*a);
-    float t1 = (-b + sqrtDisc) / (2*a);
+    // Compute discriminant
+    double discriminant = b * b - 4.0 * a * c;
+    if (discriminant < 0.0) return false;
 
-    float t = BIGFLOAT;
-   // Are both intersections in front of the ray?
-    if (t0 > 0.0f && t1 > 0.0f) {
-        if (t0 < t1) {
-            t = t0;  // t0 is closer
-        } else {
-            t = t1;  // t1 is closer
-        }
+    double sqrtDisc = sqrt(discriminant);
+    double t0 = (-b - sqrtDisc) / (2.0 * a);
+    double t1 = (-b + sqrtDisc) / (2.0 * a);
+
+    double t = static_cast<double>(BIGFLOAT);
+
+    // Determine closest positive intersection
+    if (t0 > 0.0 && t1 > 0.0) {
+        t = (t0 < t1) ? t0 : t1;
     }
-    // Only t0 is in front of the ray
-    else if (t0 > 0.0f) {
+    else if (t0 > 0.0) {
         t = t0;
     }
-    // Only t1 is in front of the ray
-    else if (t1 > 0.0f) {
+    else if (t1 > 0.0) {
         t = t1;
     }
-    // both intersections are behind the ray
     else {
-        // The sphere is completely behind the ray; no hit
+        // Both intersections are behind the ray
         return false;
     }
-    hInfo.z = t;
+
+    // Convert to float but ensure it does not exceed double value
+    hInfo.z = static_cast<float>(std::nextafter(t, -INFINITY));
     hInfo.node = hInfo.node; 
     hInfo.front = true;
     return true;

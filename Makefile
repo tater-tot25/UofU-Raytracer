@@ -1,6 +1,6 @@
 # Compiler and options
 CXX = g++
-CXXFLAGS = -Wall -O2 -Iinclude
+CXXFLAGS = -Wall -O0 -g -Iinclude
 LIBS = -lfreeglut -lopengl32 -lglu32
 LDFLAGS = -LC:/msys64/mingw64/lib
 
@@ -9,7 +9,7 @@ SRC_DIR = src
 BUILD_DIR = build
 
 # Source and object files
-SRCS = main.cpp viewport.cpp xmlload.cpp lodepng.cpp tinyxml2.cpp objects.cpp materials.cpp
+SRCS = main.cpp viewport.cpp xmlload.cpp lodepng.cpp tinyxml2.cpp objects.cpp materials.cpp lights.cpp
 OBJS = $(patsubst %.cpp,$(BUILD_DIR)/%.o,$(SRCS))
 
 # Target executable
@@ -32,5 +32,5 @@ $(BUILD_DIR):
 
 # Clean
 clean:
-	cmd /c del /Q *.o $(TARGET)
+	rm -f $(BUILD_DIR)/*.o $(TARGET)
 

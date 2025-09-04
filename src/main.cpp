@@ -14,7 +14,9 @@
 #include <random>
 #include <numeric>
 #include <algorithm>
+#include "globals.h" //for accessing the scene from lights.cpp
 
+RenderScene* globalScene;
 static std::thread gRenderThread;
 static std::atomic<bool> gCancel{false};
 
@@ -41,7 +43,7 @@ void IntersectNodeRecursive(Node* node, const Ray& ray, HitInfo& closestHit, boo
         Matrix3f itm = worldTm.GetInverse();  //inverse transform matrix
         localRay.p = itm * (ray.p - worldPos);
         localRay.dir = itm * ray.dir;
-        localRay.dir.Normalize(); 
+        //localRay.dir.Normalize(); 
         //End Transform ray to local space
         if (obj->IntersectRay(localRay, tempHInfo)) {
             Vec3f localHit = localRay.p + tempHInfo.z * localRay.dir;
@@ -66,7 +68,14 @@ void IntersectNodeRecursive(Node* node, const Ray& ray, HitInfo& closestHit, boo
     }
 }
 
+// refactored to clamp values to this function, instead of clamping in the shading calculation
+// I need to convert this to sRGB for final output c^(1/8) where 1/g is 1/gamma or g = 2.2 (1/2.2)
+// Make it optional for testing with opengl so it matches. I should add it when we do physically based lighting
+// For textures, convert to linear RGB, do the render, convert back to sRGB
 Color24 convertFromColorTo24(Color color){
+    color.r = std::min(color.r, 1.0f);
+    color.g = std::min(color.g, 1.0f);
+    color.b = std::min(color.b, 1.0f);
     Color24 col24(
             uint8_t(color.r * 255),
             uint8_t(color.g * 255),
@@ -206,7 +215,8 @@ void ShowViewport(RenderScene *scene);
 
 int main() {
     RenderScene scene;
-    LoadScene(scene, "projectTwo.xml");
+    LoadScene(scene, "scenes/brdfScene.xml");
+    globalScene = &scene;
     scene.renderImage.Init(scene.camera.imgWidth, scene.camera.imgHeight);
     ShowViewport(&scene);  //The opengl thing
 }
