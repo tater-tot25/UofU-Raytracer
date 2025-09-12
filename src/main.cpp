@@ -19,6 +19,8 @@
 RenderScene* globalScene;
 static std::thread gRenderThread;
 static std::atomic<bool> gCancel{false};
+bool convertToSRGB = false; // toggle for converting to sRGB or not
+int maxBounce = 10;
 
 // Declaring LoadScene since there is no header
 int LoadScene(RenderScene &scene, const char *filename);
@@ -72,6 +74,13 @@ void IntersectNodeRecursive(Node* node, const Ray& ray, HitInfo& closestHit, boo
 // I need to convert this to sRGB for final output c^(1/8) where 1/g is 1/gamma or g = 2.2 (1/2.2)
 // Make it optional for testing with opengl so it matches. I should add it when we do physically based lighting
 // For textures, convert to linear RGB, do the render, convert back to sRGB
+float convertChannelToSRGB(float channel) {
+    if (channel <= 0.0031308f) {
+        return 12.92f * channel;
+    } else {
+        return 1.055f * pow(channel, 1.0f / 2.4f) - 0.055f;
+    }
+}
 Color24 convertFromColorTo24(Color color){
     color.r = std::min(color.r, 1.0f);
     color.g = std::min(color.g, 1.0f);
@@ -81,6 +90,11 @@ Color24 convertFromColorTo24(Color color){
             uint8_t(color.g * 255),
             uint8_t(color.b * 255)
     );
+    if (convertToSRGB) {
+        col24.r = uint8_t(convertChannelToSRGB(col24.r / 255.0f) * 255.0f);
+        col24.g = uint8_t(convertChannelToSRGB(col24.g / 255.0f) * 255.0f);
+        col24.b = uint8_t(convertChannelToSRGB(col24.b / 255.0f) * 255.0f);
+    }
     return col24;
 }
 
@@ -89,7 +103,7 @@ Color24 convertFromColorTo24(Color color){
 void colorPixel(bool hit, int pixelIndex, RenderScene& scene, HitInfo hInfo, Ray hitRay){
     if(hit) {  
         const Material* material = hInfo.node->GetMaterial();
-        Color color = material->Shade(hitRay, hInfo, scene.lights);
+        Color color = material->Shade(hitRay, hInfo, scene.lights, maxBounce);
         Color24 color24 = convertFromColorTo24(color);
         scene.renderImage.GetPixels()[pixelIndex] = color24;
     } else {
@@ -215,7 +229,7 @@ void ShowViewport(RenderScene *scene);
 
 int main() {
     RenderScene scene;
-    LoadScene(scene, "scenes/brdfScene.xml");
+    LoadScene(scene, "scenes/projectTwo.xml");
     globalScene = &scene;
     scene.renderImage.Init(scene.camera.imgWidth, scene.camera.imgHeight);
     ShowViewport(&scene);  //The opengl thing

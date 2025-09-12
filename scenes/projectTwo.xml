@@ -17,16 +17,20 @@
  
     <!-- Materials -->
     <material type="microfacet" name="mtl1">
-      <color r = "0.8" g = "0.8" b = "0.2"/>
-      <roughness value = "0.2"/>
-      <metallic value = "0.7"/>
+      <color r = "0.8" g = "0.3" b = "0.1"/>
+      <roughness value = "0"/>
+      <metallic value = "0"/>
+      <transmittance r="1" g="1" b="1"/>
+      <absorption r="0" g="0" b="0"/>
       <ior value = "1.5"/>
     </material>
     <material type="microfacet" name="mtl2">
-      <color r = "0.8" g = "0.2" b = "0.2"/>
+      <color r = "0.8" g = "0" b = "0"/>
       <roughness value = "0.1"/>
-      <metallic value = "0.7"/>
+      <metallic value = "0.9"/>
       <ior value = "1.5"/>
+      <transmittance r="1" g="1" b="1"/>
+      <absorption r="0" g="0" b="0"/>
     </material>
     <!-- Lights -->
     <light type="ambient" name="ambientLight">
@@ -47,7 +51,7 @@
     <target x="0" y="50" z="0"/>
     <up x="0" y="0" z="1"/>
     <fov value="40"/>
-    <width value="1280"/>
-    <height value="720"/>
+    <width value="2560"/>
+    <height value="1440"/>
   </camera>
 </xml>

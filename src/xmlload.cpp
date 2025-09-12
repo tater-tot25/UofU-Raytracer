@@ -2,8 +2,8 @@
 ///
 /// \file       xmlload.cpp 
 /// \author     Cem Yuksel (www.cemyuksel.com)
-/// \version    2.1
-/// \date       August 27, 2025
+/// \version    4.0
+/// \date       August 25, 2025
 ///
 /// \brief Example source for CS 6620 - University of Utah.
 ///
@@ -246,6 +246,20 @@ void LoadMaterial( MaterialList &materials, XMLElement *element )
 				ReadFloat( child, f );
 				m->SetGlossiness(f);
 				printf("   glossiness %f\n",f);
+			} else if ( StrICmp( child->Value(), "reflection" ) ) {
+				ReadColor( child, c );
+				m->SetReflection(c);
+				printf("   reflection %f %f %f\n",c.r,c.g,c.b);
+			} else if ( StrICmp( child->Value(), "refraction" ) ) {
+				ReadColor( child, c );
+				m->SetRefraction(c);
+				ReadFloat( child, f, "index" );
+				m->SetIOR(f);
+				printf("   refraction %f %f %f (ior: %f)\n",c.r,c.g,c.b,f);
+			} else if ( StrICmp( child->Value(), "absorption" ) ) {
+				ReadColor( child, c );
+				m->SetAbsorption(c);
+				printf("   absorption %f %f %f\n",c.r,c.g,c.b);
 			}
 		}
 		return m;
@@ -283,6 +297,14 @@ void LoadMaterial( MaterialList &materials, XMLElement *element )
 					ReadFloat( child, f );
 					m->SetIOR(f);
 					printf("   ior %f\n",f);
+				} else if ( StrICmp( child->Value(), "transmittance" ) ) {
+					ReadColor( child, c );
+					m->SetTransmittance(c);
+					printf("   transmittance %f %f %f\n",c.r,c.g,c.b);
+				} else if ( StrICmp( child->Value(), "absorption" ) ) {
+					ReadColor( child, c );
+					m->SetAbsorption(c);
+					printf("   absorption %f %f %f\n",c.r,c.g,c.b);
 				}
 			}
 		} else {

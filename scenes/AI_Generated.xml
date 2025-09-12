@@ -1,0 +1,101 @@
+<xml>
+    <scene>
+        <object type="sphere" name="surface" material="polishedConcrete">
+            <scale x="12" y="0.1" z="12"/>
+            <translate y="-2.1"/>
+        </object>
+        <object type="sphere" name="sphere1" material="brushedCopper">
+            <scale x="2" y="2" z="2"/>
+        </object>
+        <object type="sphere" name="sphere2" material="goldGlass">
+            <scale x="1" y="1" z="1"/>
+            <translate x="-5.2" y="-1" z="3" />
+        </object>
+        <object type="sphere" name="sphere3" material="goldGlass">
+            <scale x="1" y="1" z="1"/>
+            <translate x="5.2" y="-1" z="3" />
+        </object>
+        <object type="sphere" name="sphere4" material="goldGlass">
+            <scale x="1" y="1" z="1"/>
+            <translate x="0" y="-1" z="-6" />
+        </object>
+        <object type="sphere" name="sphere5" material="polishedChrome">
+            <scale x="2" y="2" z="2"/>
+            <translate x="0" y="0" z="0"/>
+        </object>
+        <object type="sphere" name="sphere6" material="polishedChrome">
+            <scale x="1" y="1" z="1"/>
+            <translate x="-5.2" y="-1" z="-3" />
+        </object>
+        <object type="sphere" name="sphere7" material="polishedChrome">
+            <scale x="1" y="1" z="1"/>
+            <translate x="5.2" y="-1" z="-3" />
+        </object>
+        <object type="sphere" name="sphere8" material="polishedChrome">
+            <scale x="1" y="1" z="1"/>
+            <translate x="0" y="-1" z="6" />
+        </object>
+    
+        <material type="microfacet" name="polishedConcrete">
+            <color r = "0.9" g = "0.9" b = "0.9"/>
+            <roughness value = "0.2"/>
+            <metallic value = "0.05"/>
+            <ior value = "1.5"/>
+        </material>
+        <material type="microfacet" name="brushedCopper">
+            <color r="0.8" g="0.4" b="0.2"/>
+            <roughness value = "0.4"/>
+            <metallic value = "0.9"/>
+            <ior value = "0.5"/>
+        </material>
+        <material type="microfacet" name="roughGold">
+            <color r = "1" g = "0.7" b = "0.1"/>
+            <roughness value = "0.3"/>
+            <metallic value = "0.8"/>
+            <ior value = "0.4"/>
+        </material>
+        <material type="microfacet" name="polishedChrome">
+            <color r = "0.95" g = "0.95" b = "0.95"/>
+            <roughness value = "0.02"/>
+            <metallic value = "1"/>
+            <ior value = "0.1"/>
+        </material>
+        <material type="microfacet" name="goldGlass">
+            <color r = "0.8" g = "0.3" b = "0"/>
+            <roughness value = "0.0"/>
+            <metallic value = "0.0"/>
+            <ior value = "1.5"/>
+            <transmittance r="1" g="1" b="1"/>
+            <absorption r="0" g="0" b="0"/>
+        </material>
+        
+        <light type="ambient" name="softAmbient">
+            <intensity value="0.1"/>
+        </light>
+        <light type="point" name="redLight">
+            <intensity value="1" r="1" g="0.2" b="0.2"/>
+            <position x="-2.16" y="3" z="1.25"/>
+        </light>
+        <light type="point" name="greenLight">
+            <intensity value="1" r="0.2" g="1" b="0.2"/>
+            <position x="2.16" y="3" z="1.25"/>
+        </light>
+        <light type="point" name="blueLight">
+            <intensity value="1" r="0.2" g="0.2" b="1"/>
+            <position x="0" y="3" z="-2.5"/>
+        </light>
+        <light type="direct" name="keyLight">
+            <intensity value="1" r="1" g="1" b="1"/>
+            <direction x="1" y="-1" z="1"/>
+        </light>
+    </scene>
+
+    <camera>
+        <position x="10" y="10" z="-17.3205080757" />
+        <target x="0" y="-4" z="0"/>
+        <up x="0" y="1" z="0"/>
+        <fov value="50"/>
+        <width value="2560"/>
+        <height value="1440"/>
+    </camera>
+</xml>

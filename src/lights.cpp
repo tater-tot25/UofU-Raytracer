@@ -12,7 +12,7 @@ bool IntersectShadowRecursive(Node* node, const Ray& ray, float t_max, const Mat
 {
     if (!node) return false;
     // Compute world transform
-    Matrix3f worldTm = parentTm * node->GetTransform();
+    Matrix3f worldTm  = parentTm * node->GetTransform();
     Vec3f worldPos   = parentTm * node->GetPosition() + parentPos;
     Object* obj = node->GetNodeObj();
     if (obj) {
@@ -25,8 +25,8 @@ bool IntersectShadowRecursive(Node* node, const Ray& ray, float t_max, const Mat
         //localRay.dir.Normalize();
         // Just check for intersection
         if (obj->IntersectRay(localRay, tempHInfo)) {
-            double t_world = tempHInfo.z;
-            if ((t_world < t_max)) return true;       
+            float t_world = tempHInfo.z;
+            if ((t_world < t_max) && (t_world > 0.000001f)) return true;       
         }
     }
     // Recurse into children
@@ -49,7 +49,7 @@ float GenLight::Shadow(Ray const &ray, float t_max)
     Vec3f zero(0,0,0);
     Ray shadowRay;
     shadowRay.dir = ray.dir;
-    float bias = 0.01; // applying bias now instead of after (this fixed my )
+    float bias = 0; // applying bias now instead of after (not reccommended by Cem, fix later)
     shadowRay.p = ray.p + ray.dir * bias;
 
     hit = IntersectShadowRecursive(&globalScene->rootNode, shadowRay, t_max, identity, zero);
